@@ -235,7 +235,8 @@ class Builder:
 
     def encryption(self, filename):
         print(f'{Fore.MAGENTA}[{Fore.RESET}{Fore.WHITE}+{Fore.RESET}{Fore.MAGENTA}]{Fore.RESET}{Fore.WHITE} Obfuscating code...{Fore.RESET}')
-        os.system(f"python obfuscation.py {filename}.py")
+        os.system(f"python obfuscation.py v2_{filename}.py")
+        os.system(f"python obfuscation_v2.py v2_{filename}.py")
 
     def compile(self, filename):
         print(f'{Fore.MAGENTA}[{Fore.RESET}{Fore.WHITE}+{Fore.RESET}{Fore.MAGENTA}]{Fore.RESET} {Fore.WHITE}Compiling code...{Fore.RESET}')

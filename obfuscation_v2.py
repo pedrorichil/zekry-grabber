@@ -50,7 +50,7 @@ def main():
         code = f.read()
 
     filename = os.path.basename(args.input)
-    output_file = f'obf_{filename}'
+    output_file = f'{filename}'
 
     obfuscated = obfuscate(code, filename)
 

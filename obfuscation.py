@@ -68,7 +68,7 @@ def main():
     parser.add_argument('-o', metavar='path', help='custom output file path')
     args = parser.parse_args()
     if args.o is None:
-        args.o = f'obfuscated_{os.path.basename(args.FILE)}'
+        args.o = f'{os.path.basename(args.FILE)}'
     if not os.path.isfile(args.FILE):
         print(f'File "{os.path.basename(args.FILE)}" is not found')
         exit()
