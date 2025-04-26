@@ -6,8 +6,6 @@ import random
 import string
 from colorama import Fore
 
-## THIS IS NOT MY CODE I DON'T TAKE ANY CREDIT FOR THIS. I JUST MODIFIED IT TO WORK WITH MY SCRIPTS
-
 class Obfuscator:
     def __init__(self, code):
         self.code = code

